@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Read the commit message
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Extract sections
+HEADER=$(sed -n '1p' "$COMMIT_MSG_FILE")
+SECOND_LINE=$(sed -n '2p' "$COMMIT_MSG_FILE")
+BODY=$(sed -n '3,6p' "$COMMIT_MSG_FILE")
+LAST_LINE=$(tail -n 1 "$COMMIT_MSG_FILE")
+
+# Validate: first line is not empty
+if [[ -z "$HEADER" ]]; then
+  echo "❌ Commit message must start with a one-line summary."
+  exit 1
+fi
+
+# Validate: second line is blank
+if [[ -n "$SECOND_LINE" ]]; then
+  echo "❌ Second line must be blank."
+  exit 1
+fi
+
+# Validate: body should be at least 1 line and max 4 lines
+BODY_LINE_COUNT=$(echo "$BODY" | sed '/^\s*$/d' | wc -l)
+if (( BODY_LINE_COUNT < 1 || BODY_LINE_COUNT > 4 )); then
+  echo "❌ Commit description must be 1 to 4 lines long (after the blank line)."
+  exit 1
+fi
+
+# Validate: last line must be uppercase single word (committer name)
+if ! [[ "$LAST_LINE" =~ ^[A-Z]+$ ]]; then
+  echo "❌ Last line must be committer's FIRST name in uppercase only (e.g., ARJUN)."
+  exit 1
+fi
+
+echo "✅ Commit message format looks good."
+exit 0
+
